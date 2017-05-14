@@ -3,8 +3,6 @@
 
 # Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
 # For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
-
-
 """
 Various helper utilities.
 """
@@ -19,7 +17,6 @@ from astroid import nodes
 from astroid import raw_building
 from astroid import scoped_nodes
 from astroid import util
-
 
 BUILTINS = six.moves.builtins.__name__
 
@@ -102,9 +99,9 @@ def safe_infer(node, context=None):
         return
     try:
         next(inferit)
-        return # None if there is ambiguity on the inferred node
+        return  # None if there is ambiguity on the inferred node
     except exceptions.InferenceError:
-        return # there is some kind of ambiguity
+        return  # there is some kind of ambiguity
     except StopIteration:
         return value
 
@@ -118,8 +115,7 @@ def has_known_bases(klass, context=None):
     for base in klass.bases:
         result = safe_infer(base, context=context)
         # TODO: check for A->B->A->B pattern in class structure too?
-        if (not isinstance(result, scoped_nodes.ClassDef) or
-                result is klass or
+        if (not isinstance(result, scoped_nodes.ClassDef) or result is klass or
                 not has_known_bases(result, context=context)):
             klass._all_bases_known = False
             return False
@@ -142,12 +138,22 @@ def _type_check(type1, type2):
 
 def is_subtype(type1, type2):
     """Check if *type1* is a subtype of *typ2*."""
-    return _type_check(type2, type1)
+    result = None
+    try:
+        result = _type_check(type2, type1)
+    except exceptions._NonDeducibleTypeHierarchy:
+        result = False
+    return result
 
 
 def is_supertype(type1, type2):
     """Check if *type2* is a supertype of *type1*."""
-    return _type_check(type1, type2)
+    result = None
+    try:
+        result = _type_check(type1, type2)
+    except exceptions._NonDeducibleTypeHierarchy:
+        result = False
+    return result
 
 
 def class_instance_as_index(node):
@@ -166,8 +172,8 @@ def class_instance_as_index(node):
                 continue
 
             for result in inferred.infer_call_result(node, context=context):
-                if (isinstance(result, nodes.Const)
-                        and isinstance(result.value, int)):
+                if (isinstance(result, nodes.Const) and
+                        isinstance(result.value, int)):
                     return result
     except exceptions.InferenceError:
         pass
